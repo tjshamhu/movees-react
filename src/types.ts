@@ -7,14 +7,12 @@ export type Movie = {
     cast: {
         character_name: string
     }
-    genres: {
+    genres: Array<{
         genre_name: string
-    }
+    }>
 }
 
 export type Pagination = {
-    loading: boolean
     page: number
     pageSize: number
-    searchTerm: string
 }
