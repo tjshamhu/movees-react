@@ -1,21 +1,21 @@
-import {alpha, createTheme, InputBase, PaletteMode, styled, Theme, ThemeProvider} from '@mui/material'
+import {
+    createTheme,
+    Divider,
+    PaletteMode,
+    Theme,
+    ThemeProvider
+} from '@mui/material'
 import React, {FC, useEffect, useState} from 'react'
-import Container from '@mui/material/Container'
-import TablePagination from '@mui/material/TablePagination'
 import Typography from '@mui/material/Typography'
+import {MoviesTable} from './components/movies-table'
 import {Movie, Pagination} from './types'
 import {getMovieFetchQuery, BASE_URL} from './external'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import SearchIcon from '@mui/icons-material/Search';
-
+import AppBar from '@mui/material/AppBar'
+import Toolbar from '@mui/material/Toolbar'
+import {Search} from './components/search-input'
+import {ThemeSwitcher} from './components/theme-switch'
+import LinearProgress from '@mui/material/LinearProgress'
+import Box from '@mui/material/Box'
 
 const initialState = {
     page: 0,
@@ -31,6 +31,7 @@ export const App: FC = () => {
     const [paginationState, setPaginationState] = useState<Pagination>(initialState)
     const [movies, setMovies] = useState<Array<Movie>>([])
     const [searchTerm, setSearchTerm] = useState('')
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const query = getMovieFetchQuery({
@@ -49,7 +50,9 @@ export const App: FC = () => {
             setMovies(movies)
         }
 
-        fetchMovies(query).catch(console.error)
+        fetchMovies(query)
+            .catch(console.error)
+            .finally(() => setLoading(false))
 
     }, [])
 
@@ -72,114 +75,32 @@ export const App: FC = () => {
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => setSearchTerm(event.target.value)
 
-    const getFilteredMovieList = () => {
-        return movies.filter(movie => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    }
+    const onChangeThemeSwitch = (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => setTheme(event.target.checked ? darkMode : lightMode)
 
     return (
         <ThemeProvider theme={theme}>
-            <Container>
-                    <AppBar position="static">
-                        <Toolbar>
-                            <Typography
-                                variant="h6"
-                                noWrap
-                                component="div"
-                            >
-                                Movees DB
-                            </Typography>
-                            <Search>
-                                <SearchIconWrapper>
-                                    <SearchIcon />
-                                </SearchIconWrapper>
-                                <StyledInputBase
-                                    placeholder="Search…"
-                                    inputProps={{ 'aria-label': 'search' }}
-                                    onChange={onChangeSearchInput}
-                                />
-                            </Search>
-                        </Toolbar>
-                    </AppBar>
-
-                <TableContainer component={Paper}>
-                    <Table aria-label="a dense table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>#</TableCell>
-                                <TableCell>Title</TableCell>
-                                <TableCell align="right">Budget</TableCell>
-                                <TableCell align="right">Release date</TableCell>
-                                <TableCell align="right">Vote average</TableCell>
-                                <TableCell align="right">Genres</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {
-                                getFilteredMovieList()
-                                    .slice(paginationState.page * paginationState.pageSize, paginationState.page * paginationState.pageSize + paginationState.pageSize)
-                                    .map((movie, index) => (
-                                <TableRow
-                                    key={index}
-                                >
-                                    <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{movie.title}</TableCell>
-                                    <TableCell align="right">{movie.budget}</TableCell>
-                                    <TableCell align="right">{movie.release_date}</TableCell>
-                                    <TableCell align="right">{movie.vote_average}</TableCell>
-                                    <TableCell align="right">{movie.genres[0].genre_name}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <TablePagination
-                        component="div"
-                        count={getFilteredMovieList().length}
-                        page={paginationState.page}
-                        onPageChange={onPageChange}
-                        rowsPerPage={paginationState.pageSize}
-                        onRowsPerPageChange={onChangeRowsPerPage}
-                    />
-                </TableContainer>
-            </Container>
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h5" component="div" flex="1">Movees DB</Typography>
+                    <Search onChange={onChangeSearchInput}/>
+                    <ThemeSwitcher checked={theme.palette.mode === 'dark'} onChange={onChangeThemeSwitch}/>
+                </Toolbar>
+            </AppBar>
+            <Divider/>
+            { loading ?
+                <Box sx={{ width: '100%' }}>
+                    <LinearProgress />
+                </Box> :
+                <MoviesTable
+                    page={paginationState.page}
+                    pageSize={paginationState.pageSize}
+                    onPageChange={onPageChange}
+                    onChangeRowsPerPage={onChangeRowsPerPage}
+                    movies={movies.filter(movie => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))}
+                />
+            }
         </ThemeProvider>
     )
 }
-
-const Search = styled('div')(({ theme }) => ({
-    position: 'relative',
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor: alpha(theme.palette.common.white, 0.15),
-    '&:hover': {
-        backgroundColor: alpha(theme.palette.common.white, 0.25),
-    },
-    marginRight: theme.spacing(2),
-    marginLeft: 0,
-    width: '100%',
-    [theme.breakpoints.up('sm')]: {
-        marginLeft: theme.spacing(3),
-        width: 'auto',
-    },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-    padding: theme.spacing(0, 2),
-    height: '100%',
-    position: 'absolute',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-    color: 'inherit',
-    '& .MuiInputBase-input': {
-        padding: theme.spacing(1, 1, 1, 0),
-        paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-        transition: theme.transitions.create('width'),
-        width: '100%',
-        [theme.breakpoints.up('md')]: {
-            width: '20ch',
-        },
-    },
-}));

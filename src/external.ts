@@ -1,4 +1,3 @@
-import {Movie} from './types'
 export const BASE_URL ='https://mo-vees.herokuapp.com/api'
 
 type Params = {
