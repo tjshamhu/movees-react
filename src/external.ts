@@ -10,13 +10,9 @@ export const getMovieFetchQuery = ({page = 1, pageSize = 25, searchTerm = ''}: P
 {
   movies(page: ${page} pageSize: ${pageSize} searchTerm: "${searchTerm}") {
     title
-    overview
     budget
     release_date
     vote_average
-    cast {
-      character_name
-    }
     genres {
       genre_name
     }
